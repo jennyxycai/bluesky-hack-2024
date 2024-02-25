@@ -38,7 +38,7 @@ export default function About() {
 
       </ol>
 
-      <Link href="/paint">
+      <Link href="/detect">
         <a className="py-3 block text-center bg-black text-white rounded-md mt-10">
           Detect now!
         </a>

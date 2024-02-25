@@ -1,55 +1,37 @@
 import { useState } from "react";
 import Head from "next/head";
 import Canvas from "components/canvas";
-import PromptForm from "components/prompt-form";
+import Caption from "components/caption";
 import Dropzone from "components/dropzone";
 import Download from "components/download";
 import { XCircle as StartOverIcon } from "lucide-react";
 import MyButtonGroup from "components/selector";
 import Alert from "@mui/material/Alert";
 
-// import ShoppingCartIcon from '@material-ui/icons/ShoppingCart';
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default function Home() {
-    const [predictions, setPredictions] = useState([]);
-    const [error, setError] = useState(null);
-    const [maskImage, setMaskImage] = useState(null);
-    const [userUploadedImage, setUserUploadedImage] = useState(null);
-    const [selected, setSelected] = useState(1);
-    const [tipMsg, setTipMsg] = useState(null);
+    // State variables to manage the application's state
+    const [predictions, setPredictions] = useState([]); // Stores the sequence of predictions or processed images
+    const [error, setError] = useState(null); // To store and display errors
+    const [maskImage, setMaskImage] = useState(null); // Stores an image mask for selective editing
+    const [userUploadedImage, setUserUploadedImage] = useState(null); // Stores the user-uploaded image
+    const [selected, setSelected] = useState(0); // Manages the current selection/mode
+    const [tipMsg, setTipMsg] = useState(null); // To display tips or additional info to the user
 
+    // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
+
+    
+    // Function to handle form submissions, triggering the prediction or image processing.
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const prevPrediction = predictions[predictions.length - 1];
-        const prevPredictionOutput = prevPrediction?.output ? prevPrediction.output[prevPrediction.output.length - 1] : null;
-
+        // Prepare the request body based on the current state and user input.
         var body;
-        var img = userUploadedImage? await resizeImageBlob(userUploadedImage, 512, 512) : null // resize images to 512x512 to make model run faster
-        if (selected == 1) {
-            body = {
-                prompt: e.target.prompt.value,
-                image: img
-                    ? await readAsDataURL(img)
-                    : // only use previous prediction as init image if there's a mask
-                    maskImage
-                    ? prevPredictionOutput
-                    : null,
-                mask: maskImage,
-                invert_mask: true,
-                selected: 1,
-                
-            };
-        } else if (selected == 2) {
-            body = {
-                prompt: e.target.prompt.value,
-                image: maskImage,
-                selected: 2,
-            };
-        } else if (img) {
+        var img = userUploadedImage ? await resizeImageBlob(userUploadedImage, 512, 512) : null; // Resize the uploaded image for faster processing
+        if (img) {
+            // Input an image and and a caption
             body = {
                 prompt: e.target.prompt.value,
                 image: await readAsDataURL(img),
@@ -59,6 +41,7 @@ export default function Home() {
 
         console.log(body);
 
+        // HTTP POST request to an API endpoint for predictions
         const response = await fetch("/api/predictions", {
             method: "POST",
             headers: {
@@ -68,14 +51,17 @@ export default function Home() {
         });
         const prediction = await response.json();
 
+        // Error handling based on response status
         if (response.status !== 201) {
             setError(prediction.detail);
             return;
         }
+        // Update state with new prediction
         setPredictions(predictions.concat([prediction]));
 
+        // Polling loop to check the status of the prediction until it's completed
         while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-            await sleep(1000);
+            await sleep(1000); // Wait before each new status check
             const response = await fetch("/api/predictions/" + prediction.id);
             prediction = await response.json();
             if (response.status !== 200) {
@@ -85,14 +71,13 @@ export default function Home() {
             setPredictions(predictions.concat([prediction]));
             console.log(prediction);
             if (prediction.status === "succeeded") {
-                console.log(prediction);
                 var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
-                console.log(blob);
-                setUserUploadedImage(blob);
-                setTipMsg(null);
+                setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
+                setTipMsg(null); // Clear any tip messages
             }
         }
     };
+
 
     function imageUrlToBlob(imageUrl) {
       return fetch(imageUrl)
@@ -178,22 +163,15 @@ export default function Home() {
                             <Dropzone onImageDropped={setUserUploadedImage} predictions={predictions} userUploadedImage={userUploadedImage} selected = {selected}/>
                             <div
                                 className="bg-gray-50 relative max-h-[512px] w-full flex items-stretch"
-                                // style={{ height: 0, paddingBottom: "100%" }}
                             >
                                 <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />
                             </div>
                         </div>
                     )}
-                    <div
-                        className={`bg-gray-50 relative max-h-[512px] w-full flex items-stretch `}
-                        // Conditionally apply height based on 'selected' value
-                    >
-                        {selected == 2 && <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />}
                     </div>
-                </div>
 
                 <div className="max-w-[512px] mx-auto">
-                    <PromptForm onSubmit={handleSubmit} />
+                    <Caption onSubmit={handleSubmit} />
 
                     {tipMsg && (
                         <div className="max-w-[512px] mx-auto">
@@ -201,6 +179,7 @@ export default function Home() {
                         </div>
                     )}
 
+                    {/*restart predictions*/}
                     <div className="text-center ">
                         {((predictions.length > 0 && predictions[predictions.length - 1].output) || maskImage || userUploadedImage) && (
                             <button className="lil-button" onClick={startOver}>
