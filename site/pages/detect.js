@@ -19,6 +19,7 @@ export default function Home() {
     const [selected, setSelected] = useState(0); // Manages the current selection/mode
     const [tipMsg, setTipMsg] = useState(null); // To display tips or additional info to the user
     const [score, setscore] = useState(100);
+    const [deepFakeScore, setdeepFakeScore] = useState(100);
 
     const calculateColor = (score) => {
         const minTemp = 0;
@@ -54,7 +55,7 @@ export default function Home() {
         e.preventDefault();
 
         // Prepare the request body based on the current state and user input.
-        var body;
+       var body;
         var img = userUploadedImage ? await resizeImageBlob(userUploadedImage, 512, 512) : null; // Resize the uploaded image for faster processing
         if (img) {
             // Input an image and and a caption
@@ -66,13 +67,18 @@ export default function Home() {
         }
 
         // HTTP POST request to an API endpoint for predictions
-        const response = await fetch("/get_notebook_output", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
+        const response = await fetch("/get_notebook_output")
+            .then((response) => response.json())
+            .then((data) => {
+                postureDataRef.current = data
+                console.log("scores" + postureDataRef.current)
+            })
+            .catch((err) => {
+                //setWeatherType("ERROR");
+                console.log(err)
+            });
+
+
         const prediction = await response.json();
 
         // Error handling based on response status
@@ -85,7 +91,7 @@ export default function Home() {
         // TODO: replace the hardcoded predictions
         // You can adjust this based on your actual server response structure.
         const numberOutput = 50; //prediction.number; // Access the number from the server response
-        setscore(numberOutput)
+        
         // Instead of setting predictions with image data, you could store the number or handle it as needed
         console.log(numberOutput); // For demonstration, log the number to the console
         // Update the application state or UI based on the number here as needed
@@ -95,6 +101,7 @@ export default function Home() {
         // update a state that holds the number prediction.
         // Also, there's no need to change the user uploaded image state.
         setPredictions([...predictions, { number: numberOutput }]); // Add the number prediction to the predictions state
+        setdeepFakeScore(numberOutput);
 
         // Polling loop to check the status of the prediction until it's completed
         while (prediction.status !== "succeeded" && prediction.status !== "failed") {
@@ -112,6 +119,10 @@ export default function Home() {
                 setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
             }
         }
+        
+        /* TODO: delete the hardcode here
+        const prediction = {number: 90};
+        setdeepFakeScore(90);*/
     };
 
 
@@ -170,7 +181,7 @@ export default function Home() {
         if (err == "The specified version does not exist (or perhaps you don't have permission to use it?)")
             return "Ensure you entered all parameters. You cannot make edits without previously generating or uploading an image.";
         else
-            return "Diffusion models failed — " + err
+            return "models failed — " + err
     };
 
 
@@ -220,19 +231,20 @@ export default function Home() {
                     </div>
 
                 <div className="max-w-[512px] mx-auto">
-                    {/* Display the uploaded image and prediction number after the submission */}
-                    {userUploadedImage && predictions.length > 0 && (
+                    <Caption onSubmit={handleSubmit} />
+
+                     {/* Display the uploaded image and prediction number after the submission */}
+                     {deepFakeScore != 100 && userUploadedImage && (
                         <div className="max-w-[512px] mx-auto relative my-5">
                             <img src={URL.createObjectURL(userUploadedImage)} alt="Uploaded" className="mx-auto" />
-                            <p className="text-center my-3">Prediction Number: 50</p> {/*{predictions[predictions.length - 1].number}*/}
+                            <p className="text-center my-3">Deep Fake Score: {deepFakeScore}%</p>
                         </div>
                     )}
 
-                    <Caption onSubmit={handleSubmit} />
 
                     {/* Button to allow the user to start over or submit a new prediction */}
                     <div className="text-center ">
-                        {(userUploadedImage || predictions.length > 0) && (
+                        {(userUploadedImage) && (
                             <button className="lil-button" onClick={startOver}>
                                 <StartOverIcon className="icon" />
                                 Start over
