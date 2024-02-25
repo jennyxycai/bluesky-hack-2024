@@ -19,79 +19,99 @@ export default function Home() {
     const [userUploadedImage, setUserUploadedImage] = useState(null);
     const [selected, setSelected] = useState(1);
     const [tipMsg, setTipMsg] = useState(null);
+    const [score, setscore] = useState(100);
+    const calculateColor = (score) => {
+        const minTemp = 0;
+        const maxTemp = 100;
+        const percent = (score - minTemp) / (maxTemp - minTemp);
+        const red = Math.round(255 * percent);
+        const blue = Math.round(255 * (1 - percent));
+        return `#${red.toString(16).padStart(2, '0')}00${blue.toString(16).padStart(2, '0')}`;
+      };
 
-    console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
+      const scoreFillStyle = {
+        backgroundColor: calculateColor(score), // Starting color for the gradient
+        width: `${score}%`,
+      };
+    
+      const scoreTextStyle = {
+        marginTop: '5px'
+      };
+
+    // console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const prevPrediction = predictions[predictions.length - 1];
-        const prevPredictionOutput = prevPrediction?.output ? prevPrediction.output[prevPrediction.output.length - 1] : null;
 
-        var body;
-        var img = userUploadedImage? await resizeImageBlob(userUploadedImage, 512, 512) : null // resize images to 512x512 to make model run faster
-        if (selected == 1) {
-            body = {
-                prompt: e.target.prompt.value,
-                image: img
-                    ? await readAsDataURL(img)
-                    : // only use previous prediction as init image if there's a mask
-                    maskImage
-                    ? prevPredictionOutput
-                    : null,
-                mask: maskImage,
-                invert_mask: true,
-                selected: 1,
+        // PREVIOUS STABLE DIFFUSION CODE
+        // const prevPrediction = predictions[predictions.length - 1];
+        // const prevPredictionOutput = prevPrediction?.output ? prevPrediction.output[prevPrediction.output.length - 1] : null;
+
+        // var body;
+        // var img = userUploadedImage? await resizeImageBlob(userUploadedImage, 512, 512) : null // resize images to 512x512 to make model run faster
+        // if (selected == 1) {
+        //     body = {
+        //         prompt: e.target.prompt.value,
+        //         image: img
+        //             ? await readAsDataURL(img)
+        //             : // only use previous prediction as init image if there's a mask
+        //             maskImage
+        //             ? prevPredictionOutput
+        //             : null,
+        //         mask: maskImage,
+        //         invert_mask: true,
+        //         selected: 1,
                 
-            };
-        } else if (selected == 2) {
-            body = {
-                prompt: e.target.prompt.value,
-                image: maskImage,
-                selected: 2,
-            };
-        } else if (img) {
-            body = {
-                prompt: e.target.prompt.value,
-                image: await readAsDataURL(img),
-                selected: 0,
-            };
-        }
+        //     };
+        // } else if (selected == 2) {
+        //     body = {
+        //         prompt: e.target.prompt.value,
+        //         image: maskImage,
+        //         selected: 2,
+        //     };
+        // } else if (img) {
+        //     body = {
+        //         prompt: e.target.prompt.value,
+        //         image: await readAsDataURL(img),
+        //         selected: 0,
+        //     };
+        // }
 
-        console.log(body);
+        // console.log(body);
 
-        const response = await fetch("/api/predictions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
-        const prediction = await response.json();
+        // const response = await fetch("/api/predictions", {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify(body),
+        // });
+        // const prediction = await response.json();
 
-        if (response.status !== 201) {
-            setError(prediction.detail);
-            return;
-        }
-        setPredictions(predictions.concat([prediction]));
+        // if (response.status !== 201) {
+        //     setError(prediction.detail);
+        //     return;
+        // }
+        // setPredictions(predictions.concat([prediction]));
 
-        while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-            await sleep(1000);
-            const response = await fetch("/api/predictions/" + prediction.id);
-            prediction = await response.json();
-            if (response.status !== 200) {
-                setError(prediction.detail);
-                return;
-            }
-            setPredictions(predictions.concat([prediction]));
-            console.log(prediction);
-            if (prediction.status === "succeeded") {
-                console.log(prediction);
-                var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
-                console.log(blob);
-                setUserUploadedImage(blob);
-                setTipMsg(null);
-            }
-        }
+        // while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+        //     await sleep(1000);
+        //     const response = await fetch("/api/predictions/" + prediction.id);
+        //     prediction = await response.json();
+        //     if (response.status !== 200) {
+        //         setError(prediction.detail);
+        //         return;
+        //     }
+        //     setPredictions(predictions.concat([prediction]));
+        //     console.log(prediction);
+        //     if (prediction.status === "succeeded") {
+        //         console.log(prediction);
+        //         var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
+        //         console.log(blob);
+        //         setUserUploadedImage(blob);
+        //         setTipMsg(null);
+        //     }
+        // }
     };
 
     function imageUrlToBlob(imageUrl) {
@@ -188,10 +208,14 @@ export default function Home() {
                         className={`bg-gray-50 relative max-h-[512px] w-full flex items-stretch `}
                         // Conditionally apply height based on 'selected' value
                     >
+                            <div style={{ ...scoreFillStyle, height: `${score}%` }}>
+                                <span style={scoreTextStyle}>{score}%</span>
+                            </div>
                         {selected == 2 && <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />}
                     </div>
                 </div>
 
+                
                 <div className="max-w-[512px] mx-auto">
                     <PromptForm onSubmit={handleSubmit} />
 
