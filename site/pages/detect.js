@@ -17,7 +17,6 @@ export default function Home() {
     const [maskImage, setMaskImage] = useState(null); // Stores an image mask for selective editing
     const [userUploadedImage, setUserUploadedImage] = useState(null); // Stores the user-uploaded image
     const [selected, setSelected] = useState(0); // Manages the current selection/mode
-    const [tipMsg, setTipMsg] = useState(null); // To display tips or additional info to the user
 
     // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
@@ -56,8 +55,21 @@ export default function Home() {
             setError(prediction.detail);
             return;
         }
-        // Update state with new prediction
-        setPredictions(predictions.concat([prediction]));
+
+        // Assume the server response includes a number in a field named 'number'
+        // TODO: replace the hardcoded predictions
+        // You can adjust this based on your actual server response structure.
+        const numberOutput = 50; //prediction.number; // Access the number from the server response
+
+        // Instead of setting predictions with image data, you could store the number or handle it as needed
+        console.log(numberOutput); // For demonstration, log the number to the console
+        // Update the application state or UI based on the number here as needed
+        // For example, you might want to display this number in the UI or use it in calculations
+
+        // Instead of updating the predictions state with new image data,
+        // update a state that holds the number prediction.
+        // Also, there's no need to change the user uploaded image state.
+        setPredictions([...predictions, { number: numberOutput }]); // Add the number prediction to the predictions state
 
         // Polling loop to check the status of the prediction until it's completed
         while (prediction.status !== "succeeded" && prediction.status !== "failed") {
@@ -73,7 +85,6 @@ export default function Home() {
             if (prediction.status === "succeeded") {
                 var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
                 setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
-                setTipMsg(null); // Clear any tip messages
             }
         }
     };
@@ -110,18 +121,15 @@ export default function Home() {
     });
 }
 
-
     const select_reset = async () => {
         setPredictions([]);
         setError(null);
         setMaskImage(null);
         setUserUploadedImage(null);
-        setTipMsg(null);
     };
 
     const non_sketch_reset = async () => {
         setMaskImage(null);
-        setTipMsg(null);
     };
 
     const startOver = async (e) => {
@@ -131,7 +139,6 @@ export default function Home() {
         setMaskImage(null);
         setUserUploadedImage(null);
         setSelected(0);
-        setTipMsg(null);
     };
 
     const processError = (err) => {
@@ -140,6 +147,7 @@ export default function Home() {
       else
         return "Diffusion models failed — " + err
       };
+
       
     return (
         <div>
@@ -151,6 +159,7 @@ export default function Home() {
                 <MyButtonGroup selected={selected} setSelected={setSelected} select_reset={select_reset} non_sketch_reset={non_sketch_reset}></MyButtonGroup>
             </div>
             <main className="container mx-auto p-5">
+               {/* Error handling and other components */}
                 {error && (
                     <div className="max-w-[512px] mx-auto mb-3">
                         <Alert severity="error">Error: {processError(error)}</Alert>
@@ -174,13 +183,7 @@ export default function Home() {
                 <div className="max-w-[512px] mx-auto">
                     <Caption onSubmit={handleSubmit} />
 
-                    {tipMsg && (
-                        <div className="max-w-[512px] mx-auto">
-                            <Alert severity="info">{tipMsg}</Alert>
-                        </div>
-                    )}
-
-                    {/*restart predictions*/}
+                    {/* Button to allow the user to start over or submit a new prediction */}
                     <div className="text-center ">
                         {((predictions.length > 0 && predictions[predictions.length - 1].output) || maskImage || userUploadedImage) && (
                             <button className="lil-button" onClick={startOver}>
