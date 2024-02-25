@@ -17,7 +17,34 @@ export default function Home() {
     const [maskImage, setMaskImage] = useState(null); // Stores an image mask for selective editing
     const [userUploadedImage, setUserUploadedImage] = useState(null); // Stores the user-uploaded image
     const [selected, setSelected] = useState(0); // Manages the current selection/mode
+    const [tipMsg, setTipMsg] = useState(null); // To display tips or additional info to the user
+    const [score, setscore] = useState(100);
 
+    const calculateColor = (score) => {
+        const minTemp = 0;
+        const maxTemp = 100;
+        const percent = (score - minTemp) / (maxTemp - minTemp);
+        const red = Math.round(255 * percent);
+        const blue = Math.round(255 * (1 - percent));
+        return `#${red.toString(16).padStart(2, '0')}00${blue.toString(16).padStart(2, '0')}`;
+      };
+
+      const scoreFillStyle = {
+        backgroundColor: calculateColor(score), // Starting color for the gradient
+        width: `${score}%`,
+      };
+    
+      const scoreTextStyle = {
+        marginTop: '5px'
+      };
+
+    const [selectedUrl, setSelectedUrl] = useState('');
+
+  const handleImageClick = async (url) => {
+    setSelectedUrl(url);
+    var blob = await imageUrlToBlob(url)
+    setUserUploadedImage(blob)
+  };
     // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
 
@@ -39,7 +66,7 @@ export default function Home() {
         }
 
         // HTTP POST request to an API endpoint for predictions
-        const response = await fetch("/api/predictions", {
+        const response = await fetch("/get_notebook_output", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -58,7 +85,7 @@ export default function Home() {
         // TODO: replace the hardcoded predictions
         // You can adjust this based on your actual server response structure.
         const numberOutput = 50; //prediction.number; // Access the number from the server response
-
+        setscore(numberOutput)
         // Instead of setting predictions with image data, you could store the number or handle it as needed
         console.log(numberOutput); // For demonstration, log the number to the console
         // Update the application state or UI based on the number here as needed
@@ -72,7 +99,7 @@ export default function Home() {
         // Polling loop to check the status of the prediction until it's completed
         while (prediction.status !== "succeeded" && prediction.status !== "failed") {
             await sleep(1000); // Wait before each new status check
-            const response = await fetch("/api/predictions/" + prediction.id);
+            const response = await fetch("/get_notebook_output" + prediction.id);
             prediction = await response.json();
             if (response.status !== 200) {
                 setError(prediction.detail);
@@ -173,11 +200,24 @@ export default function Home() {
                                 className="bg-gray-50 relative max-h-[512px] w-full flex items-stretch"
                             >
                                 <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />
+                            
+                            
+                            </div>
+                            <div style={{ ...scoreFillStyle, height: `${score}%` }}>
+                                <span style={scoreTextStyle}>{score}%</span>
                             </div>
                         </div>
                     )}
-                </div>
-
+                    <div>
+                    <div style={{ display: 'flex'}}>
+      <img width="130" height="130" src="/sample_images/df1.jpg" alt="Fake #1" onClick={() => handleImageClick('/sample_images/df1.jpg')} />
+      <img width="130" height="130" src="/sample_images/df2.jpg" alt="Fake #2" onClick={() => handleImageClick('/sample_images/df2.jpg')} />
+      <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
+      <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
+</div>
+      {/* <p>Selected URL: {selectedUrl}</p> */}
+    </div>
+                    </div>
 
                 <div className="max-w-[512px] mx-auto">
                     {/* Display the uploaded image and prediction number after the submission */}
