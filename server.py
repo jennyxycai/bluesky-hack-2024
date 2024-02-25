@@ -17,8 +17,6 @@ app = Flask(__name__)
 
 image_dimensions = {'height':256, 'width':256, 'channels':3}
 
-
-
 class Classifier:
     def __init__(self):
         self.model = 0
