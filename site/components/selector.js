@@ -11,7 +11,7 @@ const MyButtonGroup = ({selected, setSelected, select_reset,non_sketch_reset}) =
     else
       non_sketch_reset()
   };
-  const titles = ["Composition", "Generation", "Sketch"]
+  const titles = ["Composition"]
 
   return (
     <div style={{
@@ -22,7 +22,7 @@ const MyButtonGroup = ({selected, setSelected, select_reset,non_sketch_reset}) =
       height: '100%'
     }}>
       <ButtonGroup style={{ width: '100%' }}>
-        {[0, 1, 2].map((index) => (
+        {[0].map((index) => (
           <Button
             key={index}
             onClick={() => handleButtonClick(index)}
