@@ -39,7 +39,7 @@ export default function Home() {
             };
         }
 
-        console.log(body);
+        // console.log(body);
 
         // HTTP POST request to an API endpoint for predictions
         const response = await fetch("/api/predictions", {
@@ -170,6 +170,7 @@ export default function Home() {
                     )}
                     </div>
 
+                
                 <div className="max-w-[512px] mx-auto">
                     <Caption onSubmit={handleSubmit} />
 
