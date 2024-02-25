@@ -54,27 +54,41 @@ export default function Home() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Prepare the request body based on the current state and user input.
-       var body;
-        var img = userUploadedImage ? await resizeImageBlob(userUploadedImage, 512, 512) : null; // Resize the uploaded image for faster processing
-        if (img) {
-            // Input an image and and a caption
-            body = {
-                prompt: e.target.prompt.value,
-                image: await readAsDataURL(img),
-                selected: 0,
-            };
+    // Prepare the request body based on the current state and user input.
+        var body = {};
+        var img = null;
+    
+        // Check if there's an uploaded image and resize it if present
+        if (userUploadedImage) {
+            img = await resizeImageBlob(userUploadedImage, 512, 512); // Resize the uploaded image for faster processing
+            const imageDataUrl = await readAsDataURL(img); // Convert image to data URL for sending
+            body = { image: imageDataUrl }; // Assuming the server expects an 'image' key with the data URL
+        }
+        
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        };
+
+        try {
+            const response = await fetch("/get_notebook_output", requestOptions);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }    
+            // Update the deepFakeScore state with the returned number
+            setdeepFakeScore(response[0]);
+    
+        } catch (error) {
+            console.error("Error fetching the prediction:", error);
+            // Here you could set an error state to display the error to the user
         }
 
-        // HTTP POST request to an API endpoint for predictions
+
+       {/* // request to an flask server endpoint for predictions
         const response = await fetch("/get_notebook_output")
             .then((response) => response.json())
-            .then((data) => {
-                postureDataRef.current = data
-                console.log("scores" + postureDataRef.current)
-            })
             .catch((err) => {
-                //setWeatherType("ERROR");
                 console.log(err)
             });
 
@@ -87,15 +101,8 @@ export default function Home() {
             return;
         }
 
-        // Assume the server response includes a number in a field named 'number'
-        // TODO: replace the hardcoded predictions
-        // You can adjust this based on your actual server response structure.
-        const numberOutput = 50; //prediction.number; // Access the number from the server response
-        
-        // Instead of setting predictions with image data, you could store the number or handle it as needed
+        const numberOutput = prediction.number; // Access the number from the server response
         console.log(numberOutput); // For demonstration, log the number to the console
-        // Update the application state or UI based on the number here as needed
-        // For example, you might want to display this number in the UI or use it in calculations
 
         // Instead of updating the predictions state with new image data,
         // update a state that holds the number prediction.
@@ -118,11 +125,8 @@ export default function Home() {
                 var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
                 setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
             }
-        }
+        }*/}
         
-        /* TODO: delete the hardcode here
-        const prediction = {number: 90};
-        setdeepFakeScore(90);*/
     };
 
 
@@ -226,7 +230,6 @@ export default function Home() {
       <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
       <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
 </div>
-      {/* <p>Selected URL: {selectedUrl}</p> */}
     </div>
                     </div>
 
