@@ -21,7 +21,7 @@ export default function Home() {
     // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
 
-    
+
     // Function to handle form submissions, triggering the prediction or image processing.
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,8 +37,6 @@ export default function Home() {
                 selected: 0,
             };
         }
-
-        // console.log(body);
 
         // HTTP POST request to an API endpoint for predictions
         const response = await fetch("/api/predictions", {
@@ -91,35 +89,35 @@ export default function Home() {
 
 
     function imageUrlToBlob(imageUrl) {
-      return fetch(imageUrl)
-          .then((response) => {
-              // Check if the fetch was successful
-              if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              // Convert the response to a blob
-              return response.blob();
-          })
-          .catch((e) => {
-              console.error("There was a problem fetching the image:", e);
-              throw e; // Re-throw the error for further handling
-          });
-  }
-  
-  function resizeImageBlob(blob, width, height) {
-    return new Promise((resolve, reject) => {
-        let img = new Image();
-        img.onload = () => {
-            let canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            canvas.toBlob(resolve, blob.type);
-        };
-        img.onerror = reject;
-        img.src = URL.createObjectURL(blob);
-    });
-}
+        return fetch(imageUrl)
+            .then((response) => {
+                // Check if the fetch was successful
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // Convert the response to a blob
+                return response.blob();
+            })
+            .catch((e) => {
+                console.error("There was a problem fetching the image:", e);
+                throw e; // Re-throw the error for further handling
+            });
+    }
+
+    function resizeImageBlob(blob, width, height) {
+        return new Promise((resolve, reject) => {
+            let img = new Image();
+            img.onload = () => {
+                let canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                canvas.toBlob(resolve, blob.type);
+            };
+            img.onerror = reject;
+            img.src = URL.createObjectURL(blob);
+        });
+    }
 
     const select_reset = async () => {
         setPredictions([]);
@@ -142,13 +140,13 @@ export default function Home() {
     };
 
     const processError = (err) => {
-      if (err == "The specified version does not exist (or perhaps you don't have permission to use it?)")
-        return "Ensure you entered all parameters. You cannot make edits without previously generating or uploading an image.";
-      else
-        return "Diffusion models failed — " + err
-      };
+        if (err == "The specified version does not exist (or perhaps you don't have permission to use it?)")
+            return "Ensure you entered all parameters. You cannot make edits without previously generating or uploading an image.";
+        else
+            return "Diffusion models failed — " + err
+    };
 
-      
+
     return (
         <div>
             <Head>
@@ -159,17 +157,18 @@ export default function Home() {
                 <MyButtonGroup selected={selected} setSelected={setSelected} select_reset={select_reset} non_sketch_reset={non_sketch_reset}></MyButtonGroup>
             </div>
             <main className="container mx-auto p-5">
-               {/* Error handling and other components */}
+                {/* Error handling and other components */}
                 {error && (
                     <div className="max-w-[512px] mx-auto mb-3">
                         <Alert severity="error">Error: {processError(error)}</Alert>
                     </div>
                 )}
 
+                {/* Display the image dropzone*/}
                 <div className="border-hairline max-w-[512px] mx-auto relative ">
                     {selected != 2 && (
                         <div className="border-hairline max-w-[512px] mx-auto relative">
-                            <Dropzone onImageDropped={setUserUploadedImage} predictions={predictions} userUploadedImage={userUploadedImage} selected = {selected}/>
+                            <Dropzone onImageDropped={setUserUploadedImage} predictions={predictions} userUploadedImage={userUploadedImage} selected={selected} />
                             <div
                                 className="bg-gray-50 relative max-h-[512px] w-full flex items-stretch"
                             >
@@ -177,15 +176,23 @@ export default function Home() {
                             </div>
                         </div>
                     )}
-                    </div>
+                </div>
 
-                
+
                 <div className="max-w-[512px] mx-auto">
+                    {/* Display the uploaded image and prediction number after the submission */}
+                    {userUploadedImage && predictions.length > 0 && (
+                        <div className="max-w-[512px] mx-auto relative my-5">
+                            <img src={URL.createObjectURL(userUploadedImage)} alt="Uploaded" className="mx-auto" />
+                            <p className="text-center my-3">Prediction Number: 50</p> {/*{predictions[predictions.length - 1].number}*/}
+                        </div>
+                    )}
+
                     <Caption onSubmit={handleSubmit} />
 
                     {/* Button to allow the user to start over or submit a new prediction */}
                     <div className="text-center ">
-                        {((predictions.length > 0 && predictions[predictions.length - 1].output) || maskImage || userUploadedImage) && (
+                        {(userUploadedImage || predictions.length > 0) && (
                             <button className="lil-button" onClick={startOver}>
                                 <StartOverIcon className="icon" />
                                 Start over
