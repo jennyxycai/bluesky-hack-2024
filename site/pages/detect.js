@@ -41,6 +41,9 @@ export default function Home() {
 
     const [selectedUrl, setSelectedUrl] = useState('');
 
+
+
+    
   const handleImageClick = async (url) => {
     setSelectedUrl(url);
     var blob = await imageUrlToBlob(url)
@@ -62,22 +65,28 @@ export default function Home() {
         if (userUploadedImage) {
             img = await resizeImageBlob(userUploadedImage, 512, 512); // Resize the uploaded image for faster processing
             const imageDataUrl = await readAsDataURL(img); // Convert image to data URL for sending
-            body = { image: imageDataUrl }; // Assuming the server expects an 'image' key with the data URL
+            body = { image: selectedUrl }; // Assuming the server expects an 'image' key with the data URL
         }
         
         const requestOptions = {
+
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Accept': '*/*'},
             body: JSON.stringify(body),
+            // mode: 'no-cors',
         };
 
         try {
-            const response = await fetch("/get_notebook_output", requestOptions);
-            if (!response.ok) {
+            const response = await fetch("http://localhost:8000/get_score", requestOptions);
+
+            const test = response.ok;
+            if (!test) {
+                console.log(response);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }    
             // Update the deepFakeScore state with the returned number
             setdeepFakeScore(response[0]);
+            console.log("success");
     
         } catch (error) {
             console.error("Error fetching the prediction:", error);
@@ -86,7 +95,7 @@ export default function Home() {
 
 
        {/* // request to an flask server endpoint for predictions
-        const response = await fetch("/get_notebook_output")
+        const response = await fetch("/get_score")
             .then((response) => response.json())
             .catch((err) => {
                 console.log(err)

@@ -9,6 +9,10 @@ from tensorflow.keras.layers import Input, Dense, Flatten, Conv2D, MaxPooling2D,
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Model
+import logging
+import flask
+import asyncio
+import json
 
 from PIL import Image
 from io import BytesIO
@@ -76,7 +80,7 @@ meso.load('Deepfake-detection/weights/Meso4_DF')
 
 def load_and_preprocess_image(image_path, target_size=(256, 256)):
     # Load the image from the local filesystem
-    img = Image.open(image_path)
+    img = Image.open("site/public" + image_path)
     
     # Resize the image to the target size (e.g., 256x256 pixels for Meso4)
     img = img.resize(target_size)
@@ -99,17 +103,34 @@ def predict_deepfake(image_url):
     confidence_score = prediction[0]
     return confidence_score
 
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = flask.Response()
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        return res
+
 @app.route('/get_score',methods=['POST'])
 async def get_score():
-    body = await request.json()
-    print("body",body)
+    
+    
+    body = json.loads(request.data)
+    # logging.info("body",body)
 
-    res = predict_deepfake(body['image'])
-    print("RES",res)
+    pred = predict_deepfake(body['image'])
+    # logging.info("RES",pred)
 
-    return res
+    response = flask.jsonify({'pred': str(pred[0])})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    # with open("tmp.txt", "w") as f:
+    #     f.write(str(pred[0]))
+    return response
+
+    # return str(pred)
 
 if __name__ == '__main__':
     #score = predict_deepfake('datasets/coco128/images/train2017/000000000025.jpg')
     #print(score) # OUTPUT: [0.9942149]
-    app.run(debug=True)
+    # app.run(debug=True)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(app.run(host='0.0.0.0', port=8000))
