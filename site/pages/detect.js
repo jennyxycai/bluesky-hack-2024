@@ -8,7 +8,9 @@ import { XCircle as StartOverIcon } from "lucide-react";
 import MyButtonGroup from "components/selector";
 import Alert from "@mui/material/Alert";
 
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 
 export default function Home() {
     // State variables to manage the application's state
@@ -28,16 +30,16 @@ export default function Home() {
         const red = Math.round(255 * percent);
         const blue = Math.round(255 * (1 - percent));
         return `#${red.toString(16).padStart(2, '0')}00${blue.toString(16).padStart(2, '0')}`;
-      };
+    };
 
-      const scoreFillStyle = {
+    const scoreFillStyle = {
         backgroundColor: calculateColor(score), // Starting color for the gradient
         width: `${score}%`,
-      };
-    
-      const scoreTextStyle = {
+    };
+
+    const scoreTextStyle = {
         marginTop: '5px'
-      };
+    };
 
     const [selectedUrl, setSelectedUrl] = useState('');
 
@@ -51,6 +53,16 @@ export default function Home() {
   };
     // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
+
+    function getRandomIntExclusive(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    function delay(time) {
+        return new Promise(resolve => setTimeout(resolve, time));
+      }
 
 
     // Function to handle form submissions, triggering the prediction or image processing.
@@ -83,7 +95,10 @@ export default function Home() {
             if (!test) {
                 console.log(response);
                 throw new Error(`HTTP error! status: ${response.status}`);
-            }    
+            }
+
+            console.log(response);
+
             // Update the deepFakeScore state with the returned number
             setdeepFakeScore(response[0]);
             console.log("success");
@@ -135,7 +150,8 @@ export default function Home() {
                 setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
             }
         }*/}
-        
+
+
     };
 
 
@@ -188,6 +204,7 @@ export default function Home() {
         setMaskImage(null);
         setUserUploadedImage(null);
         setSelected(0);
+        setdeepFakeScore(100);
     };
 
     const processError = (err) => {
@@ -224,32 +241,34 @@ export default function Home() {
                                 className="bg-gray-50 relative max-h-[512px] w-full flex items-stretch"
                             >
                                 <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />
-                            
-                            
+
+
                             </div>
-                            <div style={{ ...scoreFillStyle, height: `${score}%` }}>
-                                <span style={scoreTextStyle}>{score}%</span>
-                            </div>
+
                         </div>
                     )}
                     <div>
-                    <div style={{ display: 'flex'}}>
-      <img width="130" height="130" src="/sample_images/df1.jpg" alt="Fake #1" onClick={() => handleImageClick('/sample_images/df1.jpg')} />
-      <img width="130" height="130" src="/sample_images/df2.jpg" alt="Fake #2" onClick={() => handleImageClick('/sample_images/df2.jpg')} />
-      <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
-      <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
-</div>
-    </div>
+                        <div style={{ display: 'flex' }}>
+                            <img width="130" height="130" src="/sample_images/df1.jpg" alt="Fake #1" onClick={() => handleImageClick('/sample_images/df1.jpg')} />
+                            <img width="130" height="130" src="/sample_images/df2.jpg" alt="Fake #2" onClick={() => handleImageClick('/sample_images/df2.jpg')} />
+                            <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
+                            <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
+                        </div>
                     </div>
+                </div>
 
                 <div className="max-w-[512px] mx-auto">
                     <Caption onSubmit={handleSubmit} />
 
-                     {/* Display the uploaded image and prediction number after the submission */}
-                     {deepFakeScore != 100 && userUploadedImage && (
+                    {/* Display the uploaded image and prediction number after the submission */}
+                    {deepFakeScore != 100 && userUploadedImage && (
+
+
                         <div className="max-w-[512px] mx-auto relative my-5">
-                            <img src={URL.createObjectURL(userUploadedImage)} alt="Uploaded" className="mx-auto" />
-                            <p className="text-center my-3">Deep Fake Score: {deepFakeScore}%</p>
+
+                            <p className="text-blue-500 text-xl font-extrabold  decoration-2 underline-offset-2 text-center pb-5">
+                                <strong>How likely is it to be a deepfake? {deepFakeScore}%</strong>
+                            </p>
                         </div>
                     )}
 
