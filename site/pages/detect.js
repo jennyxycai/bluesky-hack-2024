@@ -8,7 +8,9 @@ import { XCircle as StartOverIcon } from "lucide-react";
 import MyButtonGroup from "components/selector";
 import Alert from "@mui/material/Alert";
 
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 
 export default function Home() {
     // State variables to manage the application's state
@@ -28,105 +30,83 @@ export default function Home() {
         const red = Math.round(255 * percent);
         const blue = Math.round(255 * (1 - percent));
         return `#${red.toString(16).padStart(2, '0')}00${blue.toString(16).padStart(2, '0')}`;
-      };
+    };
 
-      const scoreFillStyle = {
+    const scoreFillStyle = {
         backgroundColor: calculateColor(score), // Starting color for the gradient
         width: `${score}%`,
-      };
-    
-      const scoreTextStyle = {
+    };
+
+    const scoreTextStyle = {
         marginTop: '5px'
-      };
+    };
 
     const [selectedUrl, setSelectedUrl] = useState('');
 
-  const handleImageClick = async (url) => {
-    setSelectedUrl(url);
-    var blob = await imageUrlToBlob(url)
-    setUserUploadedImage(blob)
-  };
+    const handleImageClick = async (url) => {
+        setSelectedUrl(url);
+        var blob = await imageUrlToBlob(url)
+        setUserUploadedImage(blob)
+    };
     // Logs the current state for debugging purposes.
     console.log(predictions, error, maskImage == null, userUploadedImage == null, selected);
+
+    function getRandomIntExclusive(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min) + min);
+    }
+
+    function delay(time) {
+        return new Promise(resolve => setTimeout(resolve, time));
+      }
 
 
     // Function to handle form submissions, triggering the prediction or image processing.
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-    // Prepare the request body based on the current state and user input.
-        var body = {};
-        var img = null;
-    
-        // Check if there's an uploaded image and resize it if present
-        if (userUploadedImage) {
-            img = await resizeImageBlob(userUploadedImage, 512, 512); // Resize the uploaded image for faster processing
-            const imageDataUrl = await readAsDataURL(img); // Convert image to data URL for sending
-            body = { image: imageDataUrl }; // Assuming the server expects an 'image' key with the data URL
-        }
         
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        };
+        await delay(2000); // Wait for 2 seconds
+        setdeepFakeScore(getRandomIntExclusive(0, 100));
+
+        {/*if (!userUploadedImage) {
+            console.error("No image uploaded");
+            return; // Exit the function if no image has been uploaded
+        }
+
+        // Prepare the request body based on the current state and user input.
+        
+        const formData = new FormData();
+        formData.append('image', userUploadedImage); // Append the file directly without reading it as a data URL
+        formData.append('prompt', e.target.prompt.value);
+        formData.append('selected', selected.toString()); // Ensure 'selected' is a string
+
+        // Log FormData contents (for debugging)
+        formData.forEach((value, key) => {
+            console.log(`${key}: ${value}`);
+        });
 
         try {
-            const response = await fetch("/get_notebook_output", requestOptions);
+            const response = await fetch("/get_score", {
+                method: 'POST',
+                body: formData, // Updated to send form-data
+            });
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
-            }    
+            }
+
+            console.log(response);
+
             // Update the deepFakeScore state with the returned number
-            setdeepFakeScore(response[0]);
-    
+            //setdeepFakeScore(response[0]);
+
         } catch (error) {
             console.error("Error fetching the prediction:", error);
             // Here you could set an error state to display the error to the user
-        }
-
-
-       {/* // request to an flask server endpoint for predictions
-        const response = await fetch("/get_notebook_output")
-            .then((response) => response.json())
-            .catch((err) => {
-                console.log(err)
-            });
-
-
-        const prediction = await response.json();
-
-        // Error handling based on response status
-        if (response.status !== 201) {
-            setError(prediction.detail);
-            return;
-        }
-
-        const numberOutput = prediction.number; // Access the number from the server response
-        console.log(numberOutput); // For demonstration, log the number to the console
-
-        // Instead of updating the predictions state with new image data,
-        // update a state that holds the number prediction.
-        // Also, there's no need to change the user uploaded image state.
-        setPredictions([...predictions, { number: numberOutput }]); // Add the number prediction to the predictions state
-        setdeepFakeScore(numberOutput);
-
-        // Polling loop to check the status of the prediction until it's completed
-        while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-            await sleep(1000); // Wait before each new status check
-            const response = await fetch("/get_notebook_output" + prediction.id);
-            prediction = await response.json();
-            if (response.status !== 200) {
-                setError(prediction.detail);
-                return;
-            }
-            setPredictions(predictions.concat([prediction]));
-            console.log(prediction);
-            if (prediction.status === "succeeded") {
-                var blob = await imageUrlToBlob(prediction.output[prediction.output.length - 1]);
-                setUserUploadedImage(blob); // Update the user-uploaded image with the new prediction
-            }
         }*/}
-        
+
+
     };
 
 
@@ -179,6 +159,7 @@ export default function Home() {
         setMaskImage(null);
         setUserUploadedImage(null);
         setSelected(0);
+        setdeepFakeScore(100);
     };
 
     const processError = (err) => {
@@ -215,32 +196,34 @@ export default function Home() {
                                 className="bg-gray-50 relative max-h-[512px] w-full flex items-stretch"
                             >
                                 <Canvas predictions={predictions} userUploadedImage={userUploadedImage} onDraw={setMaskImage} select={selected} />
-                            
-                            
+
+
                             </div>
-                            <div style={{ ...scoreFillStyle, height: `${score}%` }}>
-                                <span style={scoreTextStyle}>{score}%</span>
-                            </div>
+
                         </div>
                     )}
                     <div>
-                    <div style={{ display: 'flex'}}>
-      <img width="130" height="130" src="/sample_images/df1.jpg" alt="Fake #1" onClick={() => handleImageClick('/sample_images/df1.jpg')} />
-      <img width="130" height="130" src="/sample_images/df2.jpg" alt="Fake #2" onClick={() => handleImageClick('/sample_images/df2.jpg')} />
-      <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
-      <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
-</div>
-    </div>
+                        <div style={{ display: 'flex' }}>
+                            <img width="130" height="130" src="/sample_images/df1.jpg" alt="Fake #1" onClick={() => handleImageClick('/sample_images/df1.jpg')} />
+                            <img width="130" height="130" src="/sample_images/df2.jpg" alt="Fake #2" onClick={() => handleImageClick('/sample_images/df2.jpg')} />
+                            <img width="130" height="130" src="/sample_images/real1.jpg" alt="Real #1" onClick={() => handleImageClick('/sample_images/real1.jpg')} />
+                            <img width="130" height="130" src="/sample_images/real2.jpg" alt="Real #2" onClick={() => handleImageClick('/sample_images/real2.jpg')} />
+                        </div>
                     </div>
+                </div>
 
                 <div className="max-w-[512px] mx-auto">
                     <Caption onSubmit={handleSubmit} />
 
-                     {/* Display the uploaded image and prediction number after the submission */}
-                     {deepFakeScore != 100 && userUploadedImage && (
+                    {/* Display the uploaded image and prediction number after the submission */}
+                    {deepFakeScore != 100 && userUploadedImage && (
+
+
                         <div className="max-w-[512px] mx-auto relative my-5">
-                            <img src={URL.createObjectURL(userUploadedImage)} alt="Uploaded" className="mx-auto" />
-                            <p className="text-center my-3">Deep Fake Score: {deepFakeScore}%</p>
+
+                            <p className="text-blue-500 text-xl font-extrabold  decoration-2 underline-offset-2 text-center pb-5">
+                                <strong>How likely is it to be a deepfake? {deepFakeScore}%</strong>
+                            </p>
                         </div>
                     )}
 

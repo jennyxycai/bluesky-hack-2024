@@ -19,9 +19,6 @@ export default function About() {
         Real-time deeepfake detection using MesoNet trained on custom Bluesky image datasets. 
       </p>
 
-      <p className="pb-5 text-lg text-center">
-        [DEMO VIDEO]
-      </p>
 
       <p className="pb-5 text-lg text-center">
         How to use this site:
@@ -30,10 +27,10 @@ export default function About() {
 
       <ol className="list-decimal pl-5">
         <li className="mb-2">
-          Upload your own image or select from our sample library containing a variety of Bluesky image thumbnails. A detailed analysis of the image's deepfake content should be displayed within [X time].
+          Upload your own image or select from our sample library containing a variety of Bluesky image thumbnails. An analysis of the image's deepfake content should be displayed within 5 seconds.
         </li>
         <li className="mb-2">
-          Upload a link to your BlueSky social media feed, and run our model on all images present within the web feed.
+          Upload another image for more deepfake detection!
         </li>
 
       </ol>
