@@ -18,12 +18,10 @@ export default function About() {
       <p className="pb-5 text-lg text-center">
         Real-time deeepfake detection using MesoNet trained on custom Bluesky image datasets. 
       </p>
-
-
-      <p className="pb-5 text-lg text-center">
-        How to use this site:
-      </p>
       
+      <video autoPlay loop muted playsInline className="w-full cursor-pointer">
+          <source src="/demo.mov" />
+        </video>
 
       <ol className="list-decimal pl-5">
         <li className="mb-2">

@@ -101,15 +101,15 @@ def predict_deepfake(image_url):
 
 @app.route('/get_score',methods=['POST'])
 async def get_score():
-    body = await request.json()
-    print("body",body)
+    
+    image = request.files['image'] if 'image' in request.files else None
+    #body = await request.json()
+    #print("body",body)
 
-    res = predict_deepfake(body['image'])
+    res = predict_deepfake(image)
     print("RES",res)
 
     return res
 
 if __name__ == '__main__':
-    #score = predict_deepfake('datasets/coco128/images/train2017/000000000025.jpg')
-    #print(score) # OUTPUT: [0.9942149]
     app.run(debug=True)

@@ -9,7 +9,6 @@ import sample from "lodash/sample";
 
 export default function Caption(props) {
   const [prompt] = useState(sample(samplePrompts));
-  const [image, setImage] = useState(null);
 
   return (
     <form
